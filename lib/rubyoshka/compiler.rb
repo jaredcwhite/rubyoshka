@@ -24,7 +24,9 @@ class Rubyoshka
       @line_break = nil
     end
 
-    def emit_literal(lit)
+    def emit_literal(lit, convert_to_dashes: false)
+      lit = lit.tr("_", "-") if convert_to_dashes
+
       if @output_mode
         emit_code_line_break if @line_break
         @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
@@ -183,16 +185,16 @@ class Rubyoshka
     def emit_tag(tag, atts, &block)
       emit_output do
         if atts
-          emit_literal("<#{tag}")
+          emit_literal("<#{tag}", convert_to_dashes: true)
           emit_tag_attributes(atts)
           emit_literal(block ? '>' : '/>')
         else
-          emit_literal(block ? "<#{tag}>" : "<#{tag}/>")
+          emit_literal(block ? "<#{tag}>" : "<#{tag}/>", convert_to_dashes: true)
         end
       end
       if block
         block.call
-        emit_output { emit_literal("</#{tag}>") }
+        emit_output { emit_literal("</#{tag}>", convert_to_dashes: true) }
       end
     end
 
@@ -222,9 +224,9 @@ class Rubyoshka
     def emit_tag_attribute_key(key)
       case key.type
       when :STR
-        emit_literal(key.children.first)
+        emit_literal(key.children.first, convert_to_dashes: true)
       when :LIT
-        emit_literal(key.children.first.to_s)
+        emit_literal(key.children.first.to_s, convert_to_dashes: true)
       when :NIL
         emit_literal('nil')
       else
